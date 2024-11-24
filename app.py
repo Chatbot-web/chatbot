@@ -188,17 +188,21 @@ def extract_json(file_path):
         data = json.load(file)
     return json.dumps(data, indent=2)  # Returns a formatted JSON string
 
-def extract_base64_from_image(file_path, max_size=5242880):
+def extract_base64_from_image(file_path, max_size=3750000):
     print("in image function")
-    
     try:
+        output = io.BytesIO()
         with open(file_path, "rb") as f:
             original_content = f.read()
+        print(f"Original file size: {len(original_content)} bytes")
+        print(f"Max size: {max_size} bytes")
         
         if len(original_content) <= max_size:
+            print("Returning original content")
             return original_content
 
         with Image.open(io.BytesIO(original_content)) as img:
+            print("In compression")
             format = img.format
             has_alpha = img.mode in ('RGBA', 'LA', 'P', 'PA')
             
