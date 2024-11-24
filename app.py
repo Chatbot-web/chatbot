@@ -191,3 +191,6 @@ def extract_base64_from_image(file_path):
     with open(file_path, "rb") as f:
         content = f.read()
     return content
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=8000)
