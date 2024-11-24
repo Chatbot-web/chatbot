@@ -18,4 +18,4 @@ EXPOSE 8000
 
 # Define the command to run your application
 # For Flask, replace "main" with your app's entry point file
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "app:app"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:$PORT", "app:app"]
