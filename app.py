@@ -12,6 +12,8 @@ import openpyxl
 from pptx import Presentation
 import base64
 import os 
+import io
+from PIL import Image
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -186,9 +188,54 @@ def extract_json(file_path):
         data = json.load(file)
     return json.dumps(data, indent=2)  # Returns a formatted JSON string
 
-def extract_base64_from_image(file_path):
+def extract_base64_from_image(file_path, max_size=5242880):
     print("in image function")
+    
+    try:
+        with open(file_path, "rb") as f:
+            original_content = f.read()
+        
+        if len(original_content) <= max_size:
+            return original_content
+
+        with Image.open(io.BytesIO(original_content)) as img:
+            format = img.format
+            has_alpha = img.mode in ('RGBA', 'LA', 'P', 'PA')
+            
+            quality = 95
+            output = io.BytesIO()
+            
+            while True:
+                if has_alpha:
+                    if img.mode == 'P':
+                        img = img.convert('RGBA')
+                    img.save(output, format=format, quality=quality, optimize=True)
+                else:
+                    img.save(output, format=format, quality=quality, optimize=True, progressive=True)
+                
+                compressed_content = output.getvalue()
+                
+                if len(compressed_content) <= max_size:
+                    return compressed_content
+                
+                if quality <= 20:
+                    print(f"Warning: Unable to reduce image size below {max_size} bytes while maintaining quality.")
+                    return compressed_content  # Return the smallest achievable size
+                
+                quality -= 5
+                output.seek(0)
+                output.truncate()
+
+    except IOError:
+        print(f"Error: Unable to open or process the image file: {file_path}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {str(e)}")
+    
+    # If any error occurs or compression fails, return the original content
     with open(file_path, "rb") as f:
         content = f.read()
     return content
 
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=8080)
